@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "1 More Game",
+    "slug": "one-more-game",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "onemoregame",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.blightningpower.onemoregame"
+    },
+    "android": {
+      "package": "com.blightningpower.onemoregame",
+      "adaptiveIcon": {
+        "backgroundColor": "#121212"
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": ""
+      }
+    }
+  }
+}
