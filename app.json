@@ -13,13 +13,18 @@
     "android": {
       "package": "com.blightningpower.onemoregame",
       "adaptiveIcon": {
-        "backgroundColor": "#121212"
+        "backgroundColor": "#121212",
+        "foregroundImage": "./assets/adaptive-icon.png"
       }
     },
     "extra": {
       "eas": {
         "projectId": ""
       }
+    },
+    "icon": "./assets/icon.png",
+    "web": {
+      "favicon": "./assets/icon.png"
     }
   }
 }
