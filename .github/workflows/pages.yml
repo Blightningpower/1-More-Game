@@ -43,8 +43,10 @@ jobs:
           const path = require('path');
           const basePath = '/1-More-Game';
 
-          const files = [path.join('dist', 'index.html')];
+          const indexPath = path.join('dist', 'index.html');
+          const files = [indexPath];
           const jsRoot = path.join('dist', '_expo', 'static', 'js');
+          const assetRoot = path.join('dist', 'assets', 'assets');
 
           function collectJsFiles(dir) {
             if (!fs.existsSync(dir)) return;
@@ -62,6 +64,27 @@ jobs:
             content = content.replace(/(href|src)="\/(?!\/)/g, `$1="${basePath}/`);
             content = content.replace(/uri:"\/assets\//g, `uri:"${basePath}/assets/`);
             fs.writeFileSync(file, content);
+          }
+
+          const iconFile = fs.existsSync(assetRoot)
+            ? fs.readdirSync(assetRoot).find((name) => name.startsWith('icon.') && name.endsWith('.png'))
+            : null;
+
+          if (iconFile) {
+            fs.copyFileSync(path.join(assetRoot, iconFile), path.join('dist', 'apple-touch-icon.png'));
+          }
+
+          let index = fs.readFileSync(indexPath, 'utf8');
+          const safariTags = [
+            `<link rel="apple-touch-icon" href="${basePath}/apple-touch-icon.png" />`,
+            '<meta name="apple-mobile-web-app-title" content="1 More Game" />',
+            '<meta name="apple-mobile-web-app-capable" content="yes" />',
+            '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />',
+          ].join('\n  ');
+
+          if (!index.includes('apple-touch-icon')) {
+            index = index.replace('</head>', `  ${safariTags}\n</head>`);
+            fs.writeFileSync(indexPath, index);
           }
 
           fs.writeFileSync(path.join('dist', '.nojekyll'), '');
@@ -85,3 +108,4 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
