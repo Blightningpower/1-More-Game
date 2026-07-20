@@ -1,0 +1,87 @@
+name: Deploy web app to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build web app
+        run: npm run build:web
+
+      - name: Fix GitHub Pages asset paths
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const basePath = '/1-More-Game';
+
+          const files = [path.join('dist', 'index.html')];
+          const jsRoot = path.join('dist', '_expo', 'static', 'js');
+
+          function collectJsFiles(dir) {
+            if (!fs.existsSync(dir)) return;
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+              const fullPath = path.join(dir, entry.name);
+              if (entry.isDirectory()) collectJsFiles(fullPath);
+              if (entry.isFile() && entry.name.endsWith('.js')) files.push(fullPath);
+            }
+          }
+
+          collectJsFiles(jsRoot);
+
+          for (const file of files) {
+            let content = fs.readFileSync(file, 'utf8');
+            content = content.replace(/(href|src)="\/(?!\/)/g, `$1="${basePath}/`);
+            content = content.replace(/uri:"\/assets\//g, `uri:"${basePath}/assets/`);
+            fs.writeFileSync(file, content);
+          }
+
+          fs.writeFileSync(path.join('dist', '.nojekyll'), '');
+          NODE
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
