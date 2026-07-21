@@ -235,6 +235,7 @@ export default function App() {
   const [playerName, setPlayerName] = useState('');
   const [exercises, setExercises] = useState<Exercise[]>(starterExercises);
   const [exerciseName, setExerciseName] = useState('');
+  const [randomExerciseCount, setRandomExerciseCount] = useState('4');
   const [playStyle, setPlayStyle] = useState<PlayStyle>('party');
   const [selectedMode, setSelectedMode] = useState<GameMode>('classic');
   const [setupStep, setSetupStep] = useState<SetupStep>('players');
@@ -408,6 +409,23 @@ export default function App() {
         exercise.id === exerciseId ? { ...exercise, selected: !exercise.selected } : exercise
       )
     );
+  };
+
+  const chooseRandomExercises = (count: number) => {
+    if (exercises.length === 0) return;
+
+    const safeCount = Math.max(1, Math.min(count, exercises.length));
+    const pickedIds = shuffle(exercises)
+      .slice(0, safeCount)
+      .map((exercise) => exercise.id);
+
+    setExercises((currentExercises) =>
+      currentExercises.map((exercise) => ({
+        ...exercise,
+        selected: pickedIds.includes(exercise.id)
+      }))
+    );
+    setSetupError('');
   };
 
   const addPenalty = () => {
@@ -1157,6 +1175,45 @@ export default function App() {
 
               {setupStep === 'exercises' && (
                 <>
+                  <View style={styles.randomizerPanel}>
+                    <Text style={styles.panelTitle}>Random oefeningen generator</Text>
+                    <Text style={styles.helperText}>
+                      Weet je niet wat je wilt doen? Laat de app 1 of meer oefeningen kiezen.
+                    </Text>
+                    <View style={styles.segmentRow}>
+                      {[1, 2, 3].map((count) => (
+                        <Pressable
+                          key={count}
+                          style={styles.segmentButton}
+                          onPress={() => chooseRandomExercises(count)}
+                        >
+                          <Text style={styles.segmentButtonText}>{count}</Text>
+                          <Text style={styles.segmentButtonMeta}>
+                            {count === 1 ? 'oefening' : 'oefeningen'}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                    <View style={styles.inputRow}>
+                      <TextInput
+                        value={randomExerciseCount}
+                        onChangeText={setRandomExerciseCount}
+                        onSubmitEditing={() => chooseRandomExercises(Number.parseInt(randomExerciseCount, 10) || 1)}
+                        placeholder="Custom aantal"
+                        placeholderTextColor="#8a8a8a"
+                        keyboardType="number-pad"
+                        returnKeyType="done"
+                        style={styles.input}
+                      />
+                      <Pressable
+                        style={styles.randomizerButton}
+                        onPress={() => chooseRandomExercises(Number.parseInt(randomExerciseCount, 10) || 1)}
+                      >
+                        <Text style={styles.randomizerButtonText}>Kies random</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+
                   <View style={styles.exerciseGrid}>
                     {exercises.map((exercise) => (
                       <Pressable
@@ -1813,6 +1870,27 @@ const styles = StyleSheet.create({
     color: '#f7f1e8',
     fontSize: 14,
     fontWeight: '800'
+  },
+  randomizerPanel: {
+    borderRadius: 8,
+    padding: 14,
+    backgroundColor: '#171717',
+    borderWidth: 1,
+    borderColor: '#3a3a3a',
+    gap: 10
+  },
+  randomizerButton: {
+    minHeight: 52,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#8fd7c7'
+  },
+  randomizerButtonText: {
+    color: '#121212',
+    fontSize: 14,
+    fontWeight: '900'
   },
   exerciseGrid: {
     gap: 10
